@@ -39,10 +39,10 @@ A key aspect of the project is the proposed rule to rollback the golf ball or re
 
 This rule change introduces a complex set of incentives between professionals, equipment companies, and the USGA. Currently, equipment companies can sell golf balls to fans based on the idea that they'll play the same balls as the pros. However, if this relationship no longer exists due to the proposed changes, manufacturers may be less incentivized to optimize their equipment for professionals and reduce their investment in pro endorsements.
 
-The TechGolf Insights project aims to examine the impact of these potential changes and provide insights into the consequences for players, equipment manufacturers, and the overall golfing community. By conducting comprehensive research and analysis, we aim to shed light on the various perspectives and implications related to technology's influence on the game of golf.
+The Birdie Eye View Insights project aims to examine the impact of these potential changes and provide insights into the consequences for players, equipment manufacturers, and the overall golfing community. By conducting comprehensive research and analysis, we aim to shed light on the various perspectives and implications related to technology's influence on the game of golf.
 
 ## Disclaimer
 
-Please note that the TechGolf Insights project is a research initiative and does not endorse or promote any specific technological products, rules, or proposals in the golf industry. The project aims to provide unbiased analysis and insights based on collected data and research methodologies.
+Please note that the Birdie Eye View Insights project is a research initiative and does not endorse or promote any specific technological products, rules, or proposals in the golf industry. The project aims to provide unbiased analysis and insights based on collected data and research methodologies.
 
-For further inquiries or to learn more about the project, please contact [your contact information].
+For further inquiries or to learn more about the project, please contact me at rob.p.casey1@gmail.com.
