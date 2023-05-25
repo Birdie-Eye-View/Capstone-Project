@@ -1,14 +1,12 @@
 # Customer Review Analysis
 
-This repository contains all files, and ipython notebooks, used in this project. A full outline of all the files with descriptions can be found below.
+This repository contains all files and ipython notebooks used in this project. A full outline of all the files with descriptions can be found below.
 
-To view the Slide Deck, ["click here."](https://www.canva.com/design/DAFC1pAZhjY/37-GQyhTmSVtm3tACkxOEw/edit?utm_content=DAFC1pAZhjY&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton) 
+To view the Slide Deck, ["click here."] 
 
-To view the Handout, ["click here."](https://www.canva.com/design/DAFCXzznwGM/qiVjEIAp4Bx0uVw9UfR_Tg/edit?utm_content=DAFCXzznwGM&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton) 
+To view the Final Report, ["click here."]
 
-To view the Final Report, ["click here."](https://github.com/InPersonAnalysis/customer_review_capstone/blob/main/final_notebook.ipynb)
-
-To view the Dashboard, ["click here."](https://public.tableau.com/app/profile/mathias.w.boissevain/viz/Hotel_Review_Capstone/HotelDashboard)
+To view the Dashboard, ["click here."]
 
 ___
 ## Table of Contents
