@@ -1,4 +1,4 @@
-# Customer Review Analysis
+# Technology and Golf
 
 This repository contains all files and ipython notebooks used in this project. A full outline of all the files with descriptions can be found below.
 
@@ -11,7 +11,7 @@ To view the Dashboard, ["click here."]
 ___
 ## Table of Contents
 
-- [Customer Review Analysis](#customer-review-analysis)
+- [Technology and Golf](#technology-and-golf)
   - [Table of Contents](#table-of-contents)
   - [Project Summary](#project-summary)
   - [Project Planning](#project-planning)
