@@ -167,21 +167,24 @@ def get_ball_changes(avg_by_year):
     plt.plot(avg_by_year.index, avg_by_year['drive_avg'])
     plt.xlabel('Year')
     plt.ylabel('Avg Drive Distance')
-    plt.title('Golf Ball improvements vs. Driving Distance')
-    
+    plt.title('Driving Distance Over Time')
+
     # Shaded regions for golf ball changes
-    plt.fill_between([1987, 1992], 250, 320, color='lightgray', alpha=0.3)
-    plt.fill_between([1992, 1999], 250, 320, color='lightblue', alpha=0.3)
-    plt.fill_between([1999, 2004], 250, 320, color='lightgreen', alpha=0.3)
-    plt.fill_between([2004, 2010], 250, 320, color='lightyellow', alpha=0.3)
-    plt.fill_between([2010, 2023], 250, 320, color='lightpink', alpha=0.3)
-    
+    plt.fill_between([1987, 1991], 250, 320, color='lightgray', alpha=0.3)
+    plt.fill_between([1992, 1994], 250, 320, color='lightblue', alpha=0.3)
+    plt.fill_between([1995, 2000], 250, 320, color='lightgreen', alpha=0.3)
+    plt.fill_between([2001, 2006], 250, 320, color='lightyellow', alpha=0.3)
+    plt.fill_between([2007, 2023], 250, 320, color='lightpink', alpha=0.3)
+
     # Text annotations for golf ball changes
-    plt.text(1990, 270, 'Balata Cover', fontsize=10, ha='center')
-    plt.text(1995, 280, 'Urethane Cover', fontsize=10, ha='center')
-    plt.text(2001, 290, 'Multi-Layer Construction', fontsize=10, ha='center')
-    plt.text(2007, 300, 'Low Compression Balls', fontsize=10, ha='center')
-    plt.text(2016, 310, 'Improved Aerodynamics', fontsize=10, ha='center')
+    plt.text(1989, 270, 'Balata Cover', fontsize=10, ha='center')
+    plt.text(1993, 280, 'Urethane Cover', fontsize=10, ha='center')
+    plt.text(1997, 290, 'Multi-Layer Construction', fontsize=10, ha='center')
+    plt.text(2004, 300, 'Low Compression Balls', fontsize=10, ha='center')
+    plt.text(2014, 310, 'Improved Aerodynamics', fontsize=10, ha='center')
+
+    plt.show()
+
     plt.show()    
     
 def get_club_changes(avg_by_year):
