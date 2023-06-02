@@ -60,6 +60,14 @@ import csv
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.tree import DecisionTreeRegressor
+from math import sqrt 
+
+import warnings
+warnings.filterwarnings("ignore")
+
+import statsmodels.api as sm
+from statsmodels.tsa.api import Holt, ExponentialSmoothing
 
 # =======================================================================================================
 # Imports END
@@ -108,14 +116,15 @@ def dist_over_time(avg_by_yr):
     plt.show()
 
     
-def get_avg_by_year(df):
+def get_df_by_year(df):
     '''
-    get_avg_by_year takes in the pga tour pandas df data then groups data
+    df_by_year takes in the pga tour pandas df data then groups data
     by year using mean and returns the avg_by_yr subset for exploration.
     '''
     cols = ['drive_avg', 'par_4_avg', 'par_5_avg']
-    avg_by_yr = df.groupby('year')[cols].mean()
-    return avg_by_yr
+    df_by_year = df.groupby('year')[cols].mean()
+    df_by_year = pd.DataFrame(df_by_year)
+    return df_by_year
         
 def scoring_over_time(df):
     '''
@@ -279,4 +288,188 @@ def get_par5_reg_analysis(df):
     print('Mean squared error: %.2f' % mean_squared_error(y_test, y_pred))
     # The coefficient of determination: 1 is perfect prediction
     print('Coefficient of determination: %.2f' % r2_score(y_test, y_pred))
+
+#########################
+
+def tts(df):
+    '''
+    tts takes in a pandas df and splits the data into train, validate, 
+    and test at a 70/20/10 split stratifying on the index.
+    '''
+    # define split sizes
+    train_size = int(len(df) * .7)
+    validate_size = int(len(df) * .2)
+    test_size = int(len(df) - train_size - validate_size)
+    validate_end_index = train_size + validate_size
+
+    # split into train, validation, test
+    train = df[: train_size]
+    validate = df[train_size : validate_end_index]
+    test = df[validate_end_index : ]
+
+    return train, validate, test
+
+def evaluate(target_var, validate, yhat_df):
+    '''
+    This function will take the actual values of the target_var from validate, 
+    and the predicted values stored in yhat_df, 
+    and compute the rmse, rounding to 2 decimal places. 
+    it will return the rmse. 
+    '''
+    rmse = round(sqrt(mean_squared_error(validate[target_var], yhat_df[target_var])), 2)
+    return rmse
+
+def plot_and_eval(target_var, train, validate, yhat_df):
+    '''
+    This function takes in the target var name (string), and returns a plot
+    of the values of train for that variable, validate, and the predicted values from yhat_df. 
+    it will als lable the rmse. 
+    '''
+    plt.figure(figsize = (12,4))
+    plt.plot(train[target_var], label = 'Train', linewidth = 1)
+    plt.plot(validate[target_var], label = 'Validate', linewidth = 1)
+    plt.plot(yhat_df[target_var])
+    plt.title(target_var)
+    rmse = evaluate(target_var, validate, yhat_df)
+    print(target_var, '-- RMSE: {:.2f}'.format(rmse))
+    plt.show()
+    
+    
+    
+# function to store rmse for comparison purposes
+def append_eval_df(model_type, target_var, validate, yhat_df, eval_df):
+    '''
+    this function takes in as arguments the type of model run, and the name of the target variable. 
+    It returns the eval_df with the rmse appended to it for that model and target_var. 
+    '''
+    rmse = evaluate(target_var, validate, yhat_df)
+    d = {'model_type': [model_type], 'target_var': [target_var], 'rmse': [rmse]}
+    d = pd.DataFrame(d)
+    # call function to creat empty df
+    
+    return pd.concat([eval_df, d])    
+    
+
+        
+def compute_moving_avg(train, validate):
+    '''
+    compute_moving_avg takes in train, validate,
+    computes the moving avg for 5 periods, and appends to the eval df    
+    '''
+    # empty df for results
+    eval_df = pd.DataFrame(columns=['model_type', 'target_var', 'rmse'])
+    
+    # define periods
+    periods = [3, 6, 9]
+
+    for p in periods: 
+        rolling_drive = round(train['drive_avg'].rolling(p).mean()[-1], 2)
+        rolling_par4 = round(train['par_4_avg'].rolling(p).mean()[-1], 2)
+        rolling_par5 = round(train['par_5_avg'].rolling(p).mean()[-1], 2)
+
+        yhat_df = pd.DataFrame({'drive_avg': rolling_drive,
+                                'par_4_avg': rolling_par4,
+                                'par_5_avg': rolling_par5},
+                                 index=validate.index)
+
+        model_type = str(p) + '_year_moving_avg'
+        for col in train.columns:
+            eval_df = append_eval_df(model_type = model_type,
+                                    target_var = col, validate = validate,
+                                     yhat_df = yhat_df, eval_df = eval_df)
+    return eval_df
+
+def model_prep():
+    '''
+    re-acquires data, converts to date time, drops unnecessary cols, splits data
+    '''
+    df = acquire_data()
+    # Reassign the year column to be a datetime type
+    df['year'] = pd.to_datetime(df['year'], format='%Y')
+    # Sort rows by the date and then set the index as that date
+    df = df.set_index("year").sort_index()
+    # identify cols we're moving into modeling
+    cols = ['drive_avg', 'par_4_avg', 'par_5_avg']
+    # group by year
+    df_by_year = df.groupby('year')[cols].mean()
+    # convert to df
+    df_by_year = pd.DataFrame(df_by_year)
+    # split data
+    train, validate, test = tts(df_by_year)
+    # return
+    return train, validate, test
+
+
+def train_val_best_model(train, validate):
+    '''
+    
+    '''
+    # create empty df for predicition
+    yhat_df = pd.DataFrame({'drive_avg': 0,
+                        'par_4_avg': 0,
+                        'par_5_avg': 0},
+                         index=validate.index)
+    # train model and test on validate set
+    for col in train.columns:
+        model = Holt(train[col], exponential=True, damped=False)
+        model = model.fit(optimized=True, smoothing_slope=.5, smoothing_level = .7)
+        yhat_values = model.predict(start = validate.index[0],
+                                  end = validate.index[-1])
+        yhat_df[col] = round(yhat_values, 2)
+    # plot and evaluate
+    for col in train.columns:
+        return plot_and_eval(target_var = col, train = train,
+                            validate = validate, yhat_df = yhat_df)
+
+
+    
+def final_plot(target_var, train, validate, test, yhat_df):
+    plt.figure(figsize=(12,4))
+    plt.plot(train[target_var], color='#377eb8', label='train')
+    plt.plot(validate[target_var], color='#ff7f00', label='validate')
+    plt.plot(test[target_var], color='#4daf4a',label='test')
+    plt.plot(yhat_df[target_var], color='#a65628', label='yhat')
+    plt.legend()
+    plt.title(target_var)
+    plt.show()    
+    
+    
+
+def test_best_model(train, validate, test):
+    '''
+    
+    '''
+    # create empty df for predicition
+    yhat_df = pd.DataFrame({'drive_avg': 0,
+                        'par_4_avg': 0,
+                        'par_5_avg': 0},
+                         index=test.index)
+    # train model and test on validate set
+    for col in train.columns:
+        model = Holt(train[col], exponential=True, damped=False)
+        model = model.fit(optimized=True, smoothing_slope=.5, smoothing_level = .7)
+        yhat_values = model.predict(start = test.index[0],
+                                  end = test.index[-1])
+        yhat_df[col] = round(yhat_values, 2)
+    # plot and evaluate
+    rmse_drive_avg = sqrt(mean_squared_error(test['drive_avg'], 
+                                           yhat_df['drive_avg']))
+
+    rmse_par_4_avg = sqrt(mean_squared_error(test['par_4_avg'], 
+                                           yhat_df['par_4_avg']))
+
+    rmse_par_5_avg = sqrt(mean_squared_error(test['par_5_avg'], 
+                                           yhat_df['par_5_avg']))
+
+    print('FINAL PERFORMANCE OF MODEL ON TEST DATA')
+    print('rmse- drive_avg: ', rmse_drive_avg)
+    print('rmse- par_4_avg: ', rmse_par_4_avg)
+    print('rmse- par_5_avg: ', rmse_par_5_avg)
+    for col in train.columns:
+        final_plot(col, train, validate, test, yhat_df)
+
+
+
+
+
 
