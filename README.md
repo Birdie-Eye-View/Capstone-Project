@@ -34,7 +34,24 @@ ___
 ## Project Planning
 ___
 ## Data Dictionary
-___
+|      Field 		      |        Data type 		   |				       Description				            |
+|---------------------|------------------------|----------------------------------------------|
+| age_x               |                   int64| Player's current age           				      |
+| age_y               |                 float64| Player's predicted age when they reach 317yds|
+| age_y_bin           |                category| Predicted ages sorted by 20-29,30-39,40-49   |
+| birthplace          |                  object| Birth city and country of player             |
+| dob                 |                  object| Player's date of birth                       |
+| drive_avg           |                 float64| Average drive length in yards                |
+| height              |                  object| Players height                               |
+| par_4_avg           |                 float64| Avg par 4 score                 		          |
+| par_5_avg           |                 float64| Avg par 5 score                              |
+| player              |                  object| Name of golfer                               |
+| predicted_years     |                 float64| Predicted years count to reach drive avg 317 |
+| predicted_years_bin |                category| Predicted years sorted by 20-29,30-39,40-49  |
+| weight              |                  object| Players weight                               |
+| year                |                   int64| Year index for player stats                  |
+
+
 ## Outline of Project Plan
 ---
 ### Data Acquisition
