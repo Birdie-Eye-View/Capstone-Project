@@ -60,6 +60,8 @@ Data was aquired by webscraping the PGA tour website. We looped through every ye
 
 ### Data Preparation
 
+After scraping these webpages, we extracted the desired data into thier 3 respective dataframes. We then merged them together into one, stratifying on the year and player feature to promote data integrity. We pulled random samples and audited the data to ensure it merged correctly without errors. We removed any nonsensical or rundundant columns caused by the merge, and renamed columns to promote readability
+
 ### Exploratory Analysis
 
 ### Modeling
