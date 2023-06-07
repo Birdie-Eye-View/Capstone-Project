@@ -56,6 +56,8 @@ ___
 ---
 ### Data Acquisition
 
+Data was aquired by webscraping the PGA tour website. We looped through every year available, 1987 to 2023 scraping data from three different statistic sources on this website; driving distance, average par 4 score, and average par 5 score.
+
 ### Data Preparation
 
 ### Exploratory Analysis
