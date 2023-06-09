@@ -2,9 +2,9 @@
 
 This repository contains all files and ipython notebooks used in this project. A full outline of all the files with descriptions can be found below.
 
-To view the Slide Deck, ["click here."] 
+To view the Slide Deck, ["click here."](https://www.canva.com/design/DAFlL_rZscs/vmOX1jMR1lOC3iLS-5c6MA/edit?utm_content=DAFlL_rZscs&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton) 
 
-To view the Final Report, ["click here."]
+To view the Final Report, ["click here."](https://github.com/Birdie-Eye-View/codeup-capstone/blob/main/mvp/final_report.ipynb)
 
 To view the Dashboard, ["click here."]
 
