@@ -6,7 +6,7 @@ To view the Slide Deck, ["click here."](https://www.canva.com/design/DAFlL_rZscs
 
 To view the Final Report, ["click here."](https://github.com/Birdie-Eye-View/codeup-capstone/blob/main/mvp/final_report.ipynb)
 
-To view the Dashboard, ["click here."]
+To view the PGA Stats, ["click here."](https://www.pgatour.com/stats)
 
 ___
 ## Table of Contents
