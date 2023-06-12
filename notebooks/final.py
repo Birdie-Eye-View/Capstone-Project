@@ -69,6 +69,8 @@ warnings.filterwarnings("ignore")
 import statsmodels.api as sm
 from statsmodels.tsa.api import Holt, ExponentialSmoothing
 
+from datetime import datetime
+
 # =======================================================================================================
 # Imports END
 # Acquire and Prepare START
@@ -176,7 +178,7 @@ def get_ball_changes(avg_by_year):
     plt.plot(avg_by_year.index, avg_by_year['drive_avg'])
     plt.xlabel('Year')
     plt.ylabel('Avg Drive Distance')
-    plt.title('Driving Distance Over Time')
+    plt.title('Golf Ball Improvements vs. Driving Distance')
 
     # Shaded regions for golf ball changes
     plt.fill_between([1987, 1991], 250, 320, color='lightgray', alpha=0.3)
@@ -208,7 +210,7 @@ def get_club_changes(avg_by_year):
     plt.plot(avg_by_year.index, avg_by_year['drive_avg'])
     plt.xlabel('Year')
     plt.ylabel('Avg Drive Distance')
-    plt.title('Equipment improvements vs. Driving Distance')
+    plt.title('Equipment Improvements vs. Driving Distance')
 
     # Shaded regions for equipment changes
     plt.fill_between([1987, 1992], 250, 320, color='lightgray', alpha=0.3)
@@ -467,6 +469,381 @@ def test_best_model(train, validate, test):
     print('rmse- par_5_avg: ', rmse_par_5_avg)
     for col in train.columns:
         final_plot(col, train, validate, test, yhat_df)
+
+#######-------------####### ------- POST MVP ------- ########----------##########
+
+def load_data(file1, file2):
+    
+    ''' This function loads in two csv files and returns
+    them a two separate dataframes'''
+    
+    # Load the files
+    df1 = pd.read_csv(file1)
+    df2 = pd.read_csv(file2)
+
+    return df1, df2
+
+def merge_data(df1, df2, key1, key2):
+    
+    """ This functions takes in two dataframes and two columns.
+    and formats the text in both columns of the second dataframe. 
+    
+    The two dataframes are then merged on the two new formatted columns.
+    One dataframes column had names first then last and the other dataframe had
+    names last then first. 
+    
+    The lambda function corrected this to allow the merge.
+    A merged data set is returned"""
+    
+    # Reformat the player names in the second dataframe
+    df2[key2] = df2[key2].apply(lambda x: ' '.join(x.split(', ')[::-1]))
+
+    # Merge the datasets
+    merged_data = pd.merge(df1, df2, left_on=key1, right_on=key2, how='inner')
+
+    return merged_data
+
+def calculate_age_and_clean(df, dob_column, year_column, drop_column):
+    
+    """ Prepares DOB columns for timeseries, calculates age of players and drops nulls"""
+
+    # Convert the 'DOB' column to datetime format
+    df[dob_column] = pd.to_datetime(df[dob_column], format='%m/%d/%y')
+    
+    # Adjust the 'DOB' column so that the years are correctly interpreted as being in the 1900s
+    df[dob_column] = df[dob_column].apply(lambda x: x if x.year < 2023 else datetime(x.year - 100, x.month, x.day))
+
+    # Calculate the players' ages for each year of data
+    df['age'] = df[year_column] - df[dob_column].dt.year
+    
+     # Removed duplicate player column
+    df = df.drop(columns = drop_column)
+
+    # Handle missing values
+    df = df.dropna()
+
+    return df
+
+def predict_age_to_reach_drive_avg_positive_coef(merged_data):
+    """
+    This function predicts the age at which each player is expected to reach a drive_avg of 317 using a linear regression model.
+    Only players with a positive coefficient are considered.
+
+    Parameters:
+    merged_data (DataFrame): The merged data of 'pga_scoring_and_drive.csv' and 'player_bio.csv'.
+
+    Returns:
+    dict: A dictionary with player names as keys and the predicted age to reach drive_avg of 317 as values.
+    """
+    # Initialize a dictionary to store the results
+    results = {}
+
+    # Loop over each player
+    for player in merged_data['player'].unique():
+        # Filter the data for the current player
+        player_data = merged_data[merged_data['player'] == player]
+
+        # Fit a linear regression model
+        model = LinearRegression()
+        model.fit(player_data[['age']], player_data['drive_avg'])
+
+        # Only consider players with a positive coefficient
+        if model.coef_ > 0:
+            # Predict the age at which the player is expected to reach a drive_avg of 317
+            age_317 = (317 - model.intercept_) / model.coef_
+
+            # Store the result if the player is expected to reach a drive_avg of 317 before turning 50
+            if age_317 < 50:
+                results[player] = age_317
+
+    return results
+
+
+def results_to_csv(results, output_filename):
+    
+    """ Function creates a dataframe from player and age dictionary, then 
+    creates and adds column names before saving to a csv file"""
+    
+    # Convert the results dictionary to a DataFrame
+    df_results = pd.DataFrame(results)
+
+    # Melt the DataFrame to a long format
+    df_results = df_results.melt()
+
+    # Rename the columns
+    df_results = df_results.rename(columns={"variable": "player", "value": "age"})
+
+    # Save the DataFrame to a CSV file
+    df_results.to_csv(output_filename)
+
+    return df_results
+
+############################ Merged DataFrame ########################################
+
+def merge_dataframes(file1, file2, common_column):
+    """
+    This function loads two csv files and merges them on a common column.
+
+    Parameters:
+    file1 (str): The name of the first csv file.
+    file2 (str): The name of the second csv file.
+    common_column (str): The name of the common column to merge on.
+
+    Returns:
+    DataFrame: The merged dataframe.
+    """
+    # Load the first csv file
+    df1 = pd.read_csv(file1)
+
+    # Load the second csv file
+    df2 = pd.read_csv(file2)
+
+    # Rename the 'name' column in df2 to 'player'
+    df2.rename(columns={'name': 'player'}, inplace=True)
+
+    # Merge the two dataframes
+    merged_df = pd.merge(df1, df2, on=common_column, how='inner')
+
+    return merged_df
+
+def process_and_save_dataframe(df, output_filename):
+    """
+    This function drops duplicate and unneeded columns from a dataframe, creates a new column 'predicted_years'
+    that holds the difference between 'age_y' and 'age_x', and saves the dataframe to a csv file.
+
+    Parameters:
+    df (DataFrame): The dataframe to process.
+    output_filename (str): The name of the output csv file.
+    """
+    # Drop duplicate and unneeded columns
+    df = df.drop(columns=['Unnamed: 0'])
+
+    # Create a new column 'predicted_years' that holds the difference between 'age_y' and 'age_x'
+    df['predicted_years'] = df['age_y'] - df['age_x']
+
+    # Save the dataframe to a csv file
+    df.to_csv(output_filename, index=False)
+    
+    return df
+
+
+def plot_predicted_years(df):
+    """
+    This function plots a histogram of the 'predicted_years' column in the dataframe.
+
+    Parameters:
+    df (DataFrame): The dataframe to plot.
+    """
+    # Plot a histogram of predicted_years
+    plt.figure(figsize=(10, 6))
+    sns.histplot(df['predicted_years'], kde=True, bins=30)
+    plt.xlabel('Predicted Years')
+    plt.ylabel('Players')
+    plt.title('Distribution of Predicted Years to Reach Drive Average of 317')
+    plt.show()
+
+def plot_predicted_age_groups(df):
+    """
+    This function creates bins for 'age_y' and plots a histogram of the 'age_y' column in the dataframe.
+
+    Parameters:
+    df (DataFrame): The dataframe to plot.
+    """
+    # Create bins for 'age_y'
+    bins = [20, 30, 40, 50]
+    labels = ['20-29', '30-39', '40-49']
+    df['age_y_bin'] = pd.cut(df['age_y'], bins=bins, labels=labels)
+
+    # Plot a histogram of 'age_y' with bins
+    plt.figure(figsize=(10, 6))
+    sns.histplot(df['age_y_bin'], bins=30)
+    plt.xlabel('Predicted Age Groups')
+    plt.ylabel('Players')
+    plt.title('Distribution of Predicted Age to Reach Drive Average of 317')
+    plt.show()
+
+def plot_predicted_years_bins(df):
+    """
+    This function creates bins for 'predicted_years' and plots a histogram of the 'predicted_years' column in the dataframe.
+
+    Parameters:
+    df (DataFrame): The dataframe to plot.
+    """
+    # Create bins for 'predicted_years'
+    bins = [0, 10, 20, 30]
+    labels = ['0-10', '10-20', '20-30']
+    df['predicted_years_bin'] = pd.cut(df['predicted_years'], bins=bins, labels=labels)
+
+    # Plot a histogram of 'predicted_years' with bins
+    plt.figure(figsize=(10, 6))
+    sns.histplot(df['predicted_years_bin'], bins=30)
+    plt.xlabel('Predicted Years')
+    plt.ylabel('Frequency')
+    plt.title('Distribution of Predicted Years to Reach Drive Average of 317')
+    plt.show()
+
+def plot_drive_avg_percentiles(df):
+    """
+    This function calculates the percentiles for 'drive_avg' and plots a bar chart of the percentiles.
+
+    Parameters:
+    df (DataFrame): The dataframe to plot.
+    """
+    # Calculate the percentiles for 'drive_avg'
+    top_10 = df['drive_avg'].quantile(0.9)
+    bottom_10 = df['drive_avg'].quantile(0.1)
+    middle_80 = df['drive_avg'].quantile(0.5)
+
+    # Create a dataframe for the percentiles
+    percentiles_df = pd.DataFrame({'Percentile': ['Top 10%', 'Middle 80%', 'Bottom 10%'],
+                                   'Drive Average': [top_10, middle_80, bottom_10]})
+
+    # Plot a bar chart of the percentiles
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x='Percentile', y='Drive Average', data=percentiles_df, palette='Blues')
+    plt.title('Drive Average for Top 10%, Middle 80%, and Bottom 10%')
+    plt.show()
+
+def plot_drive_avg_and_par_5_avg_percentiles(df):
+    """
+    This function calculates the percentiles for 'drive_avg' and 'par_5_avg' and plots a bar chart of the percentiles.
+
+    Parameters:
+    df (DataFrame): The dataframe to plot.
+    """
+    # Calculate the percentiles for 'drive_avg' and 'par_5_avg'
+    top_10_drive = df['drive_avg'].quantile(0.9) / 100
+    middle_80_drive = df['drive_avg'].quantile(0.5) / 100
+    bottom_10_drive = df['drive_avg'].quantile(0.1) / 100
+
+    top_10_par_5 = df['par_5_avg'].quantile(0.9)
+    middle_80_par_5 = df['par_5_avg'].quantile(0.5)
+    bottom_10_par_5 = df['par_5_avg'].quantile(0.1)
+
+    # Create a dataframe for the percentiles
+    percentiles_df = pd.DataFrame({'Percentile': ['Top 10%', 'Middle 80%', 'Bottom 10%'],
+                                   'Drive Average': [top_10_drive, middle_80_drive, bottom_10_drive],
+                                   'Par 5 Average': [top_10_par_5, middle_80_par_5, bottom_10_par_5]})
+
+    # Plot a bar chart of the percentiles
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x='Percentile', y='Drive Average', data=percentiles_df, palette='Blues')
+    sns.barplot(x='Percentile', y='Par 5 Average', data=percentiles_df, palette='Blues')
+    plt.title('Drive Average and Par 5 Average for Top 10%, Middle 80%, and Bottom 10%')
+    plt.legend(['Drive Average (scaled)', 'Par 5 Average'])
+    plt.show()
+
+def create_percentile_dataframes(merged_df, top_10, bottom_10):
+    top_10_df = merged_df[merged_df['drive_avg'] >= top_10]
+    middle_80_df = merged_df[(merged_df['drive_avg'] < top_10) & (merged_df['drive_avg'] > bottom_10)]
+    bottom_10_df = merged_df[merged_df['drive_avg'] <= bottom_10]
+    return top_10_df, middle_80_df, bottom_10_df
+
+
+def calculate_and_plot_averages(top_10_df, middle_80_df, bottom_10_df, top_10, middle_80, bottom_10):
+    # Calculate the average 'par_5_avg' for each percentile
+    top_10_par_5_avg = top_10_df['par_5_avg'].mean()
+    middle_80_par_5_avg = middle_80_df['par_5_avg'].mean()
+    bottom_10_par_5_avg = bottom_10_df['par_5_avg'].mean()
+
+    # Create a dataframe for the averages
+    averages_df = pd.DataFrame({'Percentile': ['Top 10%', 'Middle 80%', 'Bottom 10%'],
+                                'Drive Average': [top_10, middle_80, bottom_10],
+                                'Par 5 Average': [top_10_par_5_avg, middle_80_par_5_avg, bottom_10_par_5_avg]})
+
+    # Round off the 'par_5_avg' in the dataframe
+    averages_df['Par 5 Average'] = averages_df['Par 5 Average'].round(2)
+
+    # Plot a bar chart of 'par_5_avg' vs 'drive_avg'
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x='Par 5 Average', y='Drive Average', hue='Percentile', data=averages_df, palette='Blues')
+    plt.title('Drive Average vs Par 5 Average for Top 10%, Middle 80%, and Bottom 10%')
+    plt.show()
+
+
+
+def calculate_and_plot_averages(merged_df):
+    # Calculate the percentiles for 'drive_avg'
+    top_10 = merged_df['drive_avg'].quantile(0.9)
+    bottom_10 = merged_df['drive_avg'].quantile(0.1)
+    middle_80 = merged_df['drive_avg'].quantile(0.5)
+
+    # Create a new dataframe for the percentiles
+    top_10_df = merged_df[merged_df['drive_avg'] >= top_10]
+    middle_80_df = merged_df[(merged_df['drive_avg'] < top_10) & (merged_df['drive_avg'] > bottom_10)]
+    bottom_10_df = merged_df[merged_df['drive_avg'] <= bottom_10]
+
+    # Calculate the average 'par_5_avg' for each percentile
+    top_10_par_5_avg = top_10_df['par_5_avg'].mean()
+    middle_80_par_5_avg = middle_80_df['par_5_avg'].mean()
+    bottom_10_par_5_avg = bottom_10_df['par_5_avg'].mean()
+
+    # Create a dataframe for the averages
+    averages_df = pd.DataFrame({'Percentile': ['Top 10%', 'Middle 80%', 'Bottom 10%'],
+                                'Drive Average': [top_10, middle_80, bottom_10],
+                                'Par 5 Average': [top_10_par_5_avg, middle_80_par_5_avg, bottom_10_par_5_avg]})
+
+    # Round off the 'par_5_avg' in the dataframe
+    averages_df['Par 5 Average'] = averages_df['Par 5 Average'].round(2)
+
+    # Plot a bar chart of 'par_5_avg' vs 'drive_avg'
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x='Par 5 Average', y='Drive Average', hue='Percentile', data=averages_df, palette='Blues')
+    plt.title('Drive Average vs Par 5 Average for Top 10%, Middle 80%, and Bottom 10%')
+    plt.show()
+
+def calculate_and_plot_averages_par_4(merged_df):
+    # Calculate the percentiles for 'drive_avg'
+    top_10 = merged_df['drive_avg'].quantile(0.9)
+    bottom_10 = merged_df['drive_avg'].quantile(0.1)
+    middle_80 = merged_df['drive_avg'].quantile(0.5)
+
+    # Create a new dataframe for the percentiles
+    top_10_df = merged_df[merged_df['drive_avg'] >= top_10]
+    middle_80_df = merged_df[(merged_df['drive_avg'] < top_10) & (merged_df['drive_avg'] > bottom_10)]
+    bottom_10_df = merged_df[merged_df['drive_avg'] <= bottom_10]
+
+    # Calculate the average 'par_5_avg' for each percentile
+    top_10_par_5_avg = top_10_df['par_4_avg'].mean()
+    middle_80_par_5_avg = middle_80_df['par_4_avg'].mean()
+    bottom_10_par_5_avg = bottom_10_df['par_4_avg'].mean()
+
+    # Create a dataframe for the averages
+    averages_df = pd.DataFrame({'Percentile': ['Top 10%', 'Middle 80%', 'Bottom 10%'],
+                                'Drive Average': [top_10, middle_80, bottom_10],
+                                'Par 4 Average': [top_10_par_5_avg, middle_80_par_5_avg, bottom_10_par_5_avg]})
+
+    # Round off the 'par_5_avg' in the dataframe
+    averages_df['Par 4 Average'] = averages_df['Par 4 Average'].round(2)
+
+    # Plot a bar chart of 'par_5_avg' vs 'drive_avg'
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x='Par 4 Average', y='Drive Average', hue='Percentile', data=averages_df, palette='Blues')
+    plt.title('Drive Average vs Par 4 Average for Top 10%, Middle 80%, and Bottom 10%')
+    plt.show()
+
+def load_and_prep_pmvp(file1, file2):
+    '''
+    load_and_prep_pmvp loads 2 csv's, preps, merges, and
+    returns the merged df
+    '''
+    # Load the data
+    pga_scoring_and_drive, player_bio = load_data(file1, file2)
+    # Format the player names in the second dataframe and merge the datasets
+    merged_data = merge_data(pga_scoring_and_drive, player_bio, 'player', 'Players')
+    # Corrected DOB, calculated players age, and removed duplicates
+    merged_data = calculate_age_and_clean(merged_data, 'DOB', 'year','Players')
+    # return df
+    return merged_data
+
+
+def load_pmvp(file):
+    '''
+    reads in csv as a pandas df
+    '''
+    merged_data = pd.read_csv(file)
+    return merged_data
+
 
 
 
