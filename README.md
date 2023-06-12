@@ -8,7 +8,7 @@ To view the Final Report, ["click here."](https://github.com/Birdie-Eye-View/cod
 
 To view the PGA Stats, ["click here."](https://www.pgatour.com/stats)
 
-To view datasets:
+To downlaod datasets (not necessary to run notebook, this is optional):
 
 Set 1, ["click here."](https://drive.google.com/uc?export=download&id=1T5zczOftHU3BXFXFb8czAvpN8uWmBp0C)
 
