@@ -10,11 +10,11 @@ To view the PGA Stats, ["click here."](https://www.pgatour.com/stats)
 
 To view datasets:
 
-Set 1, ["click here."]([https://www.pgatour.com/stats](https://drive.google.com/uc?export=download&id=1T5zczOftHU3BXFXFb8czAvpN8uWmBp0C))
+Set 1, ["click here."](https://www.pgatour.com/stats](https://drive.google.com/uc?export=download&id=1T5zczOftHU3BXFXFb8czAvpN8uWmBp0C)
 
-Set 2, ["click here."]([https://www.pgatour.com/stats](https://drive.google.com/uc?export=download&id=118ULHKdAmNeuvc_1EKPP24D9DW3W-5bg))
+Set 2, ["click here."](https://www.pgatour.com/stats](https://drive.google.com/uc?export=download&id=118ULHKdAmNeuvc_1EKPP24D9DW3W-5bg)
 
-Set 3, ["click here."]([https://www.pgatour.com/stats](https://drive.google.com/uc?export=download&id=1u5AxqlhZxuCIgq7x8GSJt0S5eKQZzLi_))
+Set 3, ["click here."](https://www.pgatour.com/stats](https://drive.google.com/uc?export=download&id=1u5AxqlhZxuCIgq7x8GSJt0S5eKQZzLi_)
 
 ___
 ## Table of Contents
